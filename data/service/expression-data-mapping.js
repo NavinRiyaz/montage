@@ -612,7 +612,6 @@ exports.ExpressionDataMapping = DataMapping.specialize(/** @lends ExpressionData
                 isRelationship = propertyDescriptor && propertyDescriptor.valueDescriptor,
                 result;
 
-
             if (isRelationship && rule.converter) {
                 this._prepareObjectToRawDataRule(rule);
                 result = this._revertRelationshipToRawData(data, propertyDescriptor, rule, scope);
@@ -656,6 +655,37 @@ exports.ExpressionDataMapping = DataMapping.specialize(/** @lends ExpressionData
             return result;
         }
     },
+
+     /**
+     * Prefetches any object properties required to map the rawData property 
+     * and maps once the fetch is complete.
+     *
+     * @method
+     * @argument {Object} object         - An object whose properties' values
+     *                                     hold the model data.
+     * @argument {Object} data           - The object on which to assign the property
+     * @argument {string} propertyName   - The name of the raw property to which
+     *                                     to assign the values.
+     */
+    mapObjectToRawDataProperty: {
+        value: function (object, data, propertyName) {
+            var rule = this.rawDataMappingRules.get(propertyName),
+                requiredObjectProperties = rule ? rule.requirements : [],
+                result, self;
+
+            result = this.service.rootService.getObjectPropertyExpressions(object, requiredObjectProperties);
+            
+            if (this._isAsync(result)) {
+                self = this;
+                result = result.then(function () {
+                    return self._mapObjectToRawDataProperty(object, data, propertyName);
+                });
+            } else {
+                result = this._mapObjectToRawDataProperty(object, data, propertyName);
+            }
+            return result;
+        }
+    },
     
     /**
      * Convert model object properties to the raw data properties present in the requirements
@@ -685,8 +715,9 @@ exports.ExpressionDataMapping = DataMapping.specialize(/** @lends ExpressionData
                         promises.push(result);
                     }
                 }
+               
             }
-            return promises ? Promise.all(promises) : null;
+            return promises && promises.length && Promise.all(promises) || Promise.resolve(null);
         }
     },
     
