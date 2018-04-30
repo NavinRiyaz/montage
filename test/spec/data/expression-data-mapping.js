@@ -302,6 +302,7 @@ describe("An Expression Data Mapping", function() {
         movie.releaseDate = new Date(1977, 4, 25);
         movie.category = category;
         movieMapping.mapObjectToRawData(movie, data).then(function () {
+            console.log("mapObjectToRawData", data);
             expect(data.name).toBe("Star Wars");
             expect(data.budget).toBe("14000000");
             expect(data.is_featured).toBe("true");

@@ -612,6 +612,7 @@ exports.ExpressionDataMapping = DataMapping.specialize(/** @lends ExpressionData
                 isRelationship = propertyDescriptor && propertyDescriptor.valueDescriptor,
                 result;
 
+
             if (isRelationship && rule.converter) {
                 this._prepareObjectToRawDataRule(rule);
                 result = this._revertRelationshipToRawData(data, propertyDescriptor, rule, scope);
@@ -674,7 +675,7 @@ exports.ExpressionDataMapping = DataMapping.specialize(/** @lends ExpressionData
                 result, self;
 
             result = this.service.rootService.getObjectPropertyExpressions(object, requiredObjectProperties);
-            
+
             if (this._isAsync(result)) {
                 self = this;
                 result = result.then(function () {
@@ -715,9 +716,8 @@ exports.ExpressionDataMapping = DataMapping.specialize(/** @lends ExpressionData
                         promises.push(result);
                     }
                 }
-               
             }
-            return promises && promises.length && Promise.all(promises) || Promise.resolve(null);
+            return promises ? Promise.all(promises) : null;
         }
     },
     
@@ -824,7 +824,6 @@ exports.ExpressionDataMapping = DataMapping.specialize(/** @lends ExpressionData
             return prerequisites ? this.service.rootService.getObjectProperties(object, prerequisites) : Promise.resolve(null);
         }
     },
-
     _isAsync: {
         value: function (object) {
             return object && object.then && typeof object.then === "function";
