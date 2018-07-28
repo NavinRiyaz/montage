@@ -827,6 +827,63 @@
                     // Expose global require and mr
                     global.require = global.mr = applicationRequire;
 
+                    var objectURLForScript = function (location) {
+                        return window.cordovaReadyPromise.then(function () {
+                            return new Promise(function (resolve, reject) {
+                                var relativePath = location.split("www")[1];
+                                if (relativePath) {
+                                    console.log(relativePath);
+                                    readFile(relativePath, resolve);
+                                } else {
+                                    resolve(location);
+                                }
+                            });
+                        });
+                    };
+                
+                    var readFile = function (url, callback) {
+                        url = cordova.file.applicationDirectory + "www/app/" + url;
+                        resolveLocalFileSystemURL(url, function (entry) {
+                            entry.file(function (file) {
+                                var reader = new FileReader();
+                                reader.onloadend = function() {
+                                    callback(bufferToUrl(reader.result));
+                                };
+                                reader.readAsArrayBuffer(file);
+                            });
+                        }, function (error) {
+                            console.warn("ReadFile.fail", error);
+                        });
+                    };
+                
+                    var bufferToUrl = function (buffer) {
+                        var bufferView = new Uint8Array(buffer),
+                        blob = new Blob([bufferView], {type: "text/javascript"}),
+                        urlCreator = window.URL || window.webkitURL;
+                        return urlCreator.createObjectURL(blob);
+                    };
+                
+                    window.scriptsLoaded = [];
+                
+                    global.require.loadScript = function (location) {
+                        console.log("MontageOverrideLoadScript", location);
+                        scriptsLoaded.push(location);
+                        objectURLForScript(location).then(function (realLocation) {
+                            var script = document.createElement("script");
+                            script.onload = function() {
+                                script.parentNode.removeChild(script);
+                            };
+                            script.onerror = function (error) {
+                                script.parentNode.removeChild(script);
+                            };
+                            // script.src = location;
+                            script.src = realLocation;
+                            script.defer = true;
+                            document.getElementsByTagName("head")[0].appendChild(script);
+                        });
+                        
+                    };
+
                     return platform.initMontage(montageRequire, applicationRequire, params);
                 });
 
