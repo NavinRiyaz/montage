@@ -1,6 +1,7 @@
 var DataMapping = require("./data-mapping").DataMapping,
     assign = require("frb/assign"),
     compile = require("frb/compile-evaluator"),
+    DataService = require("data/service/data-service").DataService,
     ObjectDescriptorReference = require("core/meta/object-descriptor-reference").ObjectDescriptorReference,
     parse = require("frb/parse"),
     Map = require("collections/map"),
@@ -423,14 +424,34 @@ exports.ExpressionDataMapping = DataMapping.specialize(/** @lends ExpressionData
 
             if (this.requisitePropertyNames.size) {
                 while ((propertyName = iterator.next().value)) {
-                    result = this.mapRawDataToObjectProperty(data, object, propertyName);
+                    // result = this.mapRawDataToObjectProperty(data, object, propertyName);
+                    result = this._mapRawDataToObjectProperty(data, object, propertyName);
                     if (this._isAsync(result)) {
                         (promises || (promises = [])).push(result);
                     }
+                    
                 }
             }
 
             return promises && promises.length && Promise.all(promises);
+        }
+    },
+
+    _mapRawDataToObjectProperty: {
+        value: function (data, object, propertyName) {
+            var result = this.mapRawDataToObjectProperty(data, object, propertyName);
+
+            
+            if (this._isAsync(result)) {
+                var timeout = setTimeout(function () {
+                    console.log("DidNotResolve", propertyName);
+                }, 5000);
+                result = result.then(function (data) {
+                    clearTimeout(timeout);
+                    return data;
+                });
+            }
+            return result;
         }
     },
 
@@ -452,7 +473,16 @@ exports.ExpressionDataMapping = DataMapping.specialize(/** @lends ExpressionData
                 propertyDescriptor = rule && this.objectDescriptor.propertyDescriptorForName(propertyName),
                 isRelationship = propertyDescriptor && !propertyDescriptor.definition && propertyDescriptor.valueDescriptor,
                 isDerived = propertyDescriptor && !!propertyDescriptor.definition,
-                scope = this._scope;
+                scope = this._scope,
+                debug = DataService.debugProperties.has(propertyName),
+                trace = DataService.traceProperties.has(propertyName);
+
+            if (trace) {
+                console.log("DataService.fetchObjectProperty", object, propertyName);
+            }
+            if (debug) {
+                debugger;
+            }
 
             scope.value = data;
 

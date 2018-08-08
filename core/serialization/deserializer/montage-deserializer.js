@@ -88,8 +88,16 @@ var MontageDeserializer = exports.MontageDeserializer = Montage.specialize({
 
     preloadModules: {
         value: function () {
-            var serialization = JSON.parse(this._serializationString),
-                reviver = this._reviver,
+
+            var serialization; 
+            try {
+                serialization = JSON.parse(this._serializationString);
+            } catch(e) {
+                console.log(e);
+                debugger;
+            }
+            // var serialization = JSON.parse(this._serializationString),
+            var reviver = this._reviver,
                 moduleLoader = reviver.moduleLoader,
                 i,
                 labels,

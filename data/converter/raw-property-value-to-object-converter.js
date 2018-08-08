@@ -322,6 +322,7 @@ exports.RawPropertyValueToObjectConverter = Converter.specialize( /** @lends Raw
                 query = DataQuery.withTypeAndCriteria(type, criteria);
                 
                 return self.service ? self.service.then(function (service) {
+                    v;
                     return service.rootService.fetchData(query);
                 }) : null;
             });

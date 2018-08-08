@@ -31,6 +31,7 @@
 
         makeResolve: function () {
             
+            
             try {
 
                 var testHost = "http://example.org",
